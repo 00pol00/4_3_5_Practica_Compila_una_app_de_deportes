@@ -21,22 +21,63 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.material3.Surface
+import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
+import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import com.example.sports.ui.SportsApp
 import com.example.sports.ui.theme.SportsTheme
+import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.tooling.preview.Preview
 
 /**
  * Activity for Sports app
  */
 class MainActivity : ComponentActivity() {
+
+    @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+
         setContent {
+            val windowsSize= calculateWindowSizeClass(this)
             SportsTheme {
                 Surface {
-                    SportsApp()
+                    SportsApp(windowsSize.widthSizeClass)
                 }
             }
         }
     }
+}
+@Preview(showBackground = true)
+@Composable
+fun CompactPreview() {
+    SportsTheme {
+        Surface {
+            SportsApp(WindowWidthSizeClass.Compact)
+        }
+    }
+
+}
+
+@Preview(showBackground = true, widthDp = 700)
+@Composable
+fun ReplyAppMediumPreview() {
+    SportsTheme {
+        Surface {
+            SportsApp(WindowWidthSizeClass.Medium)
+        }
+    }
+}
+
+@Preview(showBackground = true, widthDp = 1000)
+@Composable
+fun ReplyAppExpandedPreview() {
+
+    SportsTheme {
+        Surface {
+            SportsApp(WindowWidthSizeClass.Expanded)
+        }
+    }
+
 }

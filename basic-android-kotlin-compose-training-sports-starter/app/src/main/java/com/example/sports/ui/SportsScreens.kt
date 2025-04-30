@@ -16,6 +16,7 @@
 
 package com.example.sports.ui
 
+import android.app.Activity
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -48,6 +49,8 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.windowsizeclass.WindowSizeClass
+import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -56,6 +59,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
@@ -69,6 +73,7 @@ import com.example.sports.R
 import com.example.sports.data.LocalSportsDataProvider
 import com.example.sports.model.Sport
 import com.example.sports.ui.theme.SportsTheme
+import com.example.sports.ui.utils.tipoDespliegueUi
 
 /**
  * Main composable that serves as container
@@ -76,10 +81,13 @@ import com.example.sports.ui.theme.SportsTheme
  */
 @Composable
 fun SportsApp(
+    windowsSize: WindowWidthSizeClass
 ) {
     val viewModel: SportsViewModel = viewModel()
     val uiState by viewModel.uiState.collectAsState()
 
+    val tipoDespliegue: tipoDespliegueUi= ObtenerTipoDespliegue(windowsSize)
+    val activity = LocalContext.current as Activity
     Scaffold(
         topBar = {
             SportsAppBar(
@@ -88,34 +96,106 @@ fun SportsApp(
             )
         }
     ) { innerPadding ->
-        if (uiState.isShowingListPage) {
-            SportsList(
-                sports = uiState.sportsList,
-                onClick = {
-                    viewModel.updateCurrentSport(it)
-                    viewModel.navigateToDetailPage()
-                },
-                contentPadding = innerPadding,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(
-                        top = dimensionResource(R.dimen.padding_medium),
-                        start = dimensionResource(R.dimen.padding_medium),
-                        end = dimensionResource(R.dimen.padding_medium),
-                    )
-            )
-        } else {
+
+        if(tipoDespliegue== tipoDespliegueUi.listaDetalle)
+        {
+            SportsListAndDetails(Modifier,innerPadding,uiState,viewModel) {
+                activity.finish()
+            }
+        }
+        else{
+            if (uiState.isShowingListPage) {
+                SportsList(
+                    sports = uiState.sportsList,
+                    onClick = {
+                        viewModel.updateCurrentSport(it)
+                        viewModel.navigateToDetailPage()
+                    },
+                    contentPadding = innerPadding,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(
+                            top = dimensionResource(R.dimen.padding_medium),
+                            start = dimensionResource(R.dimen.padding_medium),
+                            end = dimensionResource(R.dimen.padding_medium),
+                        )
+                )
+            } else {
+
+                SportsDetail(
+                    selectedSport = uiState.currentSport,
+                    contentPadding = innerPadding,
+                    onBackPressed = {
+                        viewModel.navigateToListPage()
+                    }
+                )
+            }
+        }
+
+    }
+}
+@Composable
+fun SportsListAndDetails(
+    modifier: Modifier= Modifier,
+    innerPadding: PaddingValues,
+    uiState: SportsUiState,
+    viewModel: SportsViewModel,
+    onBackPressed: () -> Unit
+)
+{
+    Row {
+       Column(
+           modifier=modifier.weight(1f)
+       ) {
+           SportsList(
+               sports = uiState.sportsList,
+               onClick = {
+                   viewModel.updateCurrentSport(it)
+                   //viewModel.navigateToDetailPage()
+               },
+               contentPadding = innerPadding,
+               modifier = Modifier
+                   .fillMaxWidth()
+                   .padding(
+                       top = dimensionResource(R.dimen.padding_medium),
+                       start = dimensionResource(R.dimen.padding_medium),
+                       end = dimensionResource(R.dimen.padding_medium),
+                   )
+           )
+       }
+        Column(
+            modifier=modifier.weight(1.5f)
+        ) {
             SportsDetail(
                 selectedSport = uiState.currentSport,
                 contentPadding = innerPadding,
-                onBackPressed = {
-                    viewModel.navigateToListPage()
-                }
+                onBackPressed = onBackPressed
+
             )
         }
     }
+
+
+
 }
 
+private fun ObtenerTipoDespliegue(windowsSize: WindowWidthSizeClass): tipoDespliegueUi
+{
+    lateinit var tipoDespliegue: tipoDespliegueUi
+    when(windowsSize)
+    {
+        WindowWidthSizeClass.Compact->{
+            tipoDespliegue= tipoDespliegueUi.lista
+        }
+        WindowWidthSizeClass.Medium->{
+            tipoDespliegue= tipoDespliegueUi.lista
+        }
+        WindowWidthSizeClass.Expanded->{
+            tipoDespliegue= tipoDespliegueUi.listaDetalle
+        }
+    }
+    return tipoDespliegue
+}
 /**
  * Composable that displays the topBar and displays back button if back navigation is possible.
  */
@@ -234,6 +314,7 @@ private fun SportsListImageItem(sport: Sport, modifier: Modifier = Modifier) {
         )
     }
 }
+
 
 @Composable
 private fun SportsList(
